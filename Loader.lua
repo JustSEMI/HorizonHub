@@ -5,7 +5,8 @@ local baseUrl = "https://raw.githubusercontent.com/JustSEMI/HorizonHub/refs/head
 
 local scriptMap = {
     [128736949265057] = baseUrl .. "Gakuran.lua",
-    [115681808123944] = baseUrl .. "ThrowCoin.lua"
+    [115681808123944] = baseUrl .. "ThrowCoin.lua",
+    [72042130041700] = baseUrl .. "ThrowCoin.lua"
 }
 
 local universalScript = baseUrl .. "Universal.lua"
