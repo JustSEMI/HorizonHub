@@ -1,7 +1,7 @@
 ### *HORIZON HUB* **( OPEN SOURCE )**
 
 ```txt
-Coming Soon Release V1
+loadstring(game:HttpGet("https://raw.githubusercontent.com/JustSEMI/HorizonHub/refs/heads/main/Loader.lua"))()
 ```
 
 *Kalau mau **berkontribusi** langsung buat Pullrequest.*
