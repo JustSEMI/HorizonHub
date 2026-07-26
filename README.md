@@ -8,3 +8,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/JustSEMI/HorizonHub/r
 *Kalau mau **request fitur** langsung DM* atau join dicord di bawah ini untuk diskusi ***PROJECT*** lebih lanjut
 
 Discord : ``` discord.gg/HzekhKtEtn ```
+
+### CREDIT
+
+- **JustSEMI** - Lead Developer & Creator
+- **WindUI Lib** - Gui/UI Library
