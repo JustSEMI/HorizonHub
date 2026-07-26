@@ -68,72 +68,11 @@ local Window = WindUI:CreateWindow({
     Transparent = false,
     Theme = "Dark",
     SideBarWidth = 200,
-    HasOutline = true
+    HasOutline = false
 })
 
 
--- FPS TAG
-local FPSTag = Window:Tag({
-    Title = "FPS: 0",
-    Color = Color3.fromRGB(100, 150, 255),
-})
- 
-local RunService = game:GetService("RunService")
-local lastUpdate = tick()
-local frameCount = 0
- 
-RunService.RenderStepped:Connect(function()
-    frameCount = frameCount + 1
-    local now = tick()
-    
-    if now - lastUpdate >= 1 then
-        local fps = math.floor(frameCount / (now - lastUpdate))
-        FPSTag:SetTitle("FPS: " .. fps)
-        
-        if fps >= 50 then
-            FPSTag:SetColor(Color3.fromRGB(0, 255, 0)) -- Green
-        elseif fps >= 30 then
-            FPSTag:SetColor(Color3.fromRGB(255, 200, 0)) -- Yellow
-        else
-            FPSTag:SetColor(Color3.fromRGB(255, 0, 0)) -- Red
-        end
-        
-        
-        frameCount = 0
-        lastUpdate = now
-    end
-end)
--- PING TAG
-local PingTag = Window:Tag({
-    Title = "Ping: 0ms",
-    Color = Color3.fromRGB(100, 200, 255),
-})
- 
-task.spawn(function()
-    while true do
-        local success, ping = pcall(function()
-            local Stats = game:GetService("Stats")
-            local pingValue = Stats.Network.ServerStatsItem["Data Ping"]:GetValue()
-            return math.floor(pingValue)
-        end)
-        
-        if success and ping then
-            PingTag:SetTitle("Ping: " .. ping .. "ms")
-            
-            if ping <= 50 then
-                PingTag:SetColor(Color3.fromRGB(0, 255, 0)) -- Green
-            elseif ping <= 100 then
-                PingTag:SetColor(Color3.fromRGB(255, 200, 0)) -- Yellow
-            elseif ping <= 200 then
-                PingTag:SetColor(Color3.fromRGB(255, 150, 0)) -- Orange
-            else
-                PingTag:SetColor(Color3.fromRGB(255, 0, 0))
-            end
-        end
-        
-        task.wait(2)
-    end
-end)
+-- FPS & Ping Tags removed to optimize performance (already in Overlay)
 -- VERSION TAG
 local VersionTeg = Window:Tag({
     Title = "v1.1.0",
@@ -1435,7 +1374,7 @@ local function isVisible(targetPart)
     return true
 end
 
-RunService.RenderStepped:Connect(function(deltaTime)
+RunService.Heartbeat:Connect(function(deltaTime)
     if HorizonUnloaded then
         FOVCircle.Visible = false
         for p, _ in pairs(Dev.Drawings) do removeESP(p) end
@@ -1773,7 +1712,7 @@ if not getgenv().HorizonOverlaySetup2 then
     
     local lastUpdate = 0
     local frames = 0
-    RunService.RenderStepped:Connect(function(deltaTime)
+    RunService.Heartbeat:Connect(function(deltaTime)
         frames = frames + 1
         if os.clock() - lastUpdate >= 1 then
             local str = ""
