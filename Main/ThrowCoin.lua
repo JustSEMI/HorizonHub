@@ -1,5 +1,5 @@
 --[[
-    Throw a Coin v1.1.0
+    Throw a Coin v1.1.1
     Dev script by HorizonTeam
 ]]
 
@@ -73,7 +73,7 @@ local Window = WindUI:CreateWindow({
 -- FPS & Ping Tags removed to optimize performance (already in Overlay)
 -- VERSION TAG
 local VersionTeg = Window:Tag({
-    Title = "v1.1.0",
+    Title = "v1.1.1",
     Color = Color3.fromRGB(190, 140, 255),
 })
 
@@ -288,6 +288,8 @@ local ToggleAutoValue = SectionShop:Toggle({
 -- LOGIC ANTI-AFK
 task.spawn(function()
     local VirtualUser = game:GetService("VirtualUser")
+    
+    -- Anti Roblox Default Kick
     LocalPlayer.Idled:Connect(function()
         if Config.AntiAFK and not HorizonUnloaded then
             pcall(function()
@@ -297,15 +299,37 @@ task.spawn(function()
         end
     end)
 
-    -- Bypass SetAFKSafe Remote
+    task.spawn(function()
+        while not HorizonUnloaded do
+            if Config.AntiAFK and getconnections then
+                pcall(function()
+                    for _, conn in pairs(getconnections(LocalPlayer.Idled)) do
+                        if not string.match(tostring(conn.Function), "Horizon") then
+                        end
+                    end
+                end)
+            end
+            task.wait(5)
+        end
+    end)
+
+    -- Hook Namecall & Auto Keypress
     pcall(function()
         local oldNamecall
         oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
             local method = getnamecallmethod()
             local args = {...}
             
-            if Config.AntiAFK and not HorizonUnloaded and method == "FireServer" and tostring(self) == "SetAFKSafe" then
+            if Config.AntiAFK and not HorizonUnloaded and method == "FireServer" and self.Name == "SetAFKSafe" then
                 if args[1] == true then
+                    task.spawn(function()
+                        local VirtualInputManager = game:GetService("VirtualInputManager")
+                        pcall(function()
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                            task.wait(0.1)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+                        end)
+                    end)
                     args[1] = false
                     return oldNamecall(self, unpack(args))
                 end
