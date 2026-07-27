@@ -1,5 +1,5 @@
 --[[
-    Gakuran v1.1.0
+    Gakuran v1.2.0
     Dev script by HorizonTeam
 ]]
 

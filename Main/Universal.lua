@@ -1,5 +1,5 @@
 --[[
-    HorizonHub x Dev
+    Universal v1.1.1
     By HorizonHub
 ]]
 
@@ -75,7 +75,7 @@ local Window = WindUI:CreateWindow({
 -- FPS & Ping Tags removed to optimize performance (already in Overlay)
 -- VERSION TAG
 local VersionTeg = Window:Tag({
-    Title = "v1.1.0",
+    Title = "v1.1.1",
     Color = Color3.fromRGB(190, 140, 255),
 })
 
@@ -597,7 +597,7 @@ SectionThemes:Dropdown({
     Values = {"Dark", "Light", "Rose", "Aqua", "Amethyst"},
     Value = "Dark",
     Callback = function(val)
-        pcall(function() Window:SetTheme(val) end)
+        pcall(function() WindUI:SetTheme(val) end)
     end
 })
 local SectionDanger = TabSettings:Section({Title = "System & Security", Icon = "shield-alert", Opened = true})

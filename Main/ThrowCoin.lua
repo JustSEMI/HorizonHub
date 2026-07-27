@@ -1,5 +1,5 @@
 --[[
-    Throw a Coin v1.0.0
+    Throw a Coin v1.1.0
     Dev script by HorizonTeam
 ]]
 
@@ -11,6 +11,29 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local HorizonUnloaded = false
 
+-- BYPASS THROW REJECTED
+task.spawn(function()
+    pcall(function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local ThrowRejected = ReplicatedStorage:WaitForChild("Assets", 5)
+        if ThrowRejected then ThrowRejected = ThrowRejected:WaitForChild("Events", 5) end
+        if ThrowRejected then ThrowRejected = ThrowRejected:WaitForChild("ThrowRejected", 5) end
+        
+        if ThrowRejected and getconnections then
+            for _, conn in pairs(getconnections(ThrowRejected.OnClientEvent)) do
+                conn:Disable()
+            end
+            task.spawn(function()
+                while not HorizonUnloaded do
+                    for _, conn in pairs(getconnections(ThrowRejected.OnClientEvent)) do
+                        conn:Disable()
+                    end
+                    task.wait(2)
+                end
+            end)
+        end
+    end)
+end)
 -- CONFIG
 local Config = {
     AutoFarm = false,
@@ -50,7 +73,7 @@ local Window = WindUI:CreateWindow({
 -- FPS & Ping Tags removed to optimize performance (already in Overlay)
 -- VERSION TAG
 local VersionTeg = Window:Tag({
-    Title = "v1.0.0",
+    Title = "v1.1.0",
     Color = Color3.fromRGB(190, 140, 255),
 })
 
@@ -139,14 +162,11 @@ SectionFarm:Toggle({
     end
 })
 
-
-
-
 SectionFarm:Slider({
     Title = "Throw Delay",
     Desc = "Kecepatan lempar koin",
     Step = 0.1,
-    Value = {Min = 0.5, Max = 3, Default = Config.ThrowDelay},
+    Value = {Min = 0, Max = 3, Default = Config.ThrowDelay},
     Callback = function(value)
         Config.ThrowDelay = value
     end
@@ -229,7 +249,8 @@ SectionFarm:Toggle({
     end
 })
 
-local SectionShop = TabMain:Section({Title = "Shop & Upgrades", Icon = "shopping-cart", Opened = true})
+local TabShop = Window:Tab({Title = "Shop", Icon = "shopping-bag"})
+local SectionShop = TabShop:Section({Title = "Shop & Upgrades", Icon = "shopping-cart", Opened = true})
 
 SectionShop:Toggle({
     Title = "Auto Sell All",
@@ -275,6 +296,24 @@ task.spawn(function()
             end)
         end
     end)
+
+    -- Bypass SetAFKSafe Remote
+    pcall(function()
+        local oldNamecall
+        oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+            local method = getnamecallmethod()
+            local args = {...}
+            
+            if Config.AntiAFK and not HorizonUnloaded and method == "FireServer" and tostring(self) == "SetAFKSafe" then
+                if args[1] == true then
+                    args[1] = false
+                    return oldNamecall(self, unpack(args))
+                end
+            end
+            
+            return oldNamecall(self, ...)
+        end)
+    end)
 end)
 
 -- LOGIC AUTO SELL
@@ -292,12 +331,12 @@ task.spawn(function()
     end
 end)
 
--- LOGIC AUTO SHOP (UPGRADES)
+-- LOGIC AUTO SHOP
 task.spawn(function()
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local RequestUpgradeEvent = ReplicatedStorage:WaitForChild("Assets"):WaitForChild("Events"):WaitForChild("RequestUpgrade")
     
-    while task.wait(1) do
+    while task.wait(0.1) do
         if not HorizonUnloaded then
             if Config.AutoUpgradeLuck then
                 pcall(function() RequestUpgradeEvent:FireServer("Luck Multiplier") end)
@@ -309,7 +348,7 @@ task.spawn(function()
     end
 end)
 
--- LOGIC NOTIFIKASI KEUANGAN (AUTO DISABLE UPGRADE)
+-- LOGIC NOTIFIKASI KEUANGAN
 task.spawn(function()
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local PopupEvent = ReplicatedStorage:WaitForChild("DisplayPopup")
@@ -321,10 +360,15 @@ task.spawn(function()
                     if Config.AutoUpgradeLuck or Config.AutoUpgradeValue then
                         Config.AutoUpgradeLuck = false
                         Config.AutoUpgradeValue = false
-                        
                         pcall(function()
-                            if ToggleAutoLuck and ToggleAutoLuck.SetValue then ToggleAutoLuck:SetValue(false) end
-                            if ToggleAutoValue and ToggleAutoValue.SetValue then ToggleAutoValue:SetValue(false) end
+                            if ToggleAutoLuck then
+                                if ToggleAutoLuck.Set then ToggleAutoLuck:Set(false)
+                                elseif ToggleAutoLuck.SetValue then ToggleAutoLuck:SetValue(false) end
+                            end
+                            if ToggleAutoValue then
+                                if ToggleAutoValue.Set then ToggleAutoValue:Set(false)
+                                elseif ToggleAutoValue.SetValue then ToggleAutoValue:SetValue(false) end
+                            end
                         end)
                         
                         WindUI:Notify({
@@ -539,14 +583,13 @@ SectionOverlay:Dropdown({
 })
 
 local SectionThemes = TabSettings:Section({Title = "Theme Customization", Icon = "palette", Opened = true})
--- Fitur ubah tema, WindUI mendukung SetTheme secara bawaan (Dark, Light, Rose, dll)
 SectionThemes:Dropdown({
     Title = "Select UI Theme",
     Desc = "Ubah warna antarmuka WindUI secara instan",
     Values = {"Dark", "Light", "Rose", "Aqua", "Amethyst"},
     Value = "Dark",
     Callback = function(val)
-        pcall(function() Window:SetTheme(val) end)
+        pcall(function() WindUI:SetTheme(val) end)
     end
 })
 local SectionDanger = TabSettings:Section({Title = "System & Security", Icon = "shield-alert", Opened = true})
@@ -662,9 +705,7 @@ WindUI:Notify({
 -- MODULE RETURN
 local ThrowCoinModule = {}
 
--- ==========================================
 -- OVERLAY SYSTEM
--- ==========================================
 if not getgenv().HorizonOverlaySetup2 then
     getgenv().HorizonOverlaySetup2 = true
     getgenv().HorizonOverlayPos = getgenv().HorizonOverlayPos or "Top Left"
