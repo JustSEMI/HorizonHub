@@ -370,12 +370,27 @@ local TabRhythm = Window:Tab({Title = "Auto Play", Icon = "play"})
 
 local SectionControls = TabRhythm:Section({Title = "Controls", Icon = "gamepad-2", Opened = true})
 
-SectionControls:Toggle({
+local ToggleAutoPlay
+ToggleAutoPlay = SectionControls:Toggle({
     Title = "Enable Auto Play",
     Desc = "Otomatis memainkan not",
     Value = Config.Enabled,
     Callback = function(val)
         Config.Enabled = val
+    end
+})
+
+SectionControls:Keybind({
+    Title = "Auto Play Hotkey",
+    Desc = "Pintasan menyalakan/mematikan Auto Play",
+    Value = "None",
+    Callback = function()
+        Config.Enabled = not Config.Enabled
+        pcall(function()
+            if ToggleAutoPlay.Set then ToggleAutoPlay:Set(Config.Enabled) 
+            elseif ToggleAutoPlay.SetValue then ToggleAutoPlay:SetValue(Config.Enabled) end
+        end)
+        WindUI:Notify({Title = "Auto Play", Content = Config.Enabled and "Diaktifkan via Hotkey" or "Dimatikan via Hotkey", Duration = 2})
     end
 })
 
@@ -464,8 +479,7 @@ local selectedMidi = ""
 local isPlayingMidi = false
 local currentPlaybackThread = nil
 
-local MidiHStack1 = SectionMidi:HStack({Title = "File Selection"})
-local MidiDropdown = MidiHStack1:Dropdown({
+local MidiDropdown = SectionMidi:Dropdown({
     Title = "Select MIDI File",
     Desc = "Pilih file lagu (.mid)",
     Values = getMidiFiles(),
@@ -475,8 +489,9 @@ local MidiDropdown = MidiHStack1:Dropdown({
     end
 })
 
-MidiHStack1:Button({
+SectionMidi:Button({
     Title = "Refresh Files",
+    Desc = "Refresh ulang daftar file",
     Callback = function()
         pcall(function() MidiDropdown:Refresh(getMidiFiles()) end)
     end
@@ -506,12 +521,31 @@ SectionMidi:Slider({
     end
 })
 
-SectionMidi:Toggle({
+local ToggleMidiAutoPlay
+ToggleMidiAutoPlay = SectionMidi:Toggle({
     Title = "Enable Auto Play on Sit (.mid)",
     Desc = "Otomatis memainkan MIDI saat duduk",
     Value = midiAutoPlayEnabled,
     Callback = function(state)
         midiAutoPlayEnabled = state
+    end
+})
+
+SectionMidi:Keybind({
+    Title = "Force Stop Hotkey",
+    Desc = "Pintasan untuk memberhentikan paksa lagu yang sedang diputar",
+    Value = "None",
+    Callback = function()
+        if getgenv().GakuranPlayingPiano then
+            getgenv().GakuranPlayingPiano = false
+            if getgenv().GakuranPianoThread then
+                pcall(function() task.cancel(getgenv().GakuranPianoThread) end)
+                getgenv().GakuranPianoThread = nil
+            end
+            WindUI:Notify({Title = "Force Stop", Content = "Auto Piano telah dihentikan secara paksa!", Duration = 3})
+        else
+            WindUI:Notify({Title = "Force Stop", Content = "Tidak ada lagu yang sedang dimainkan.", Duration = 2})
+        end
     end
 })
 
@@ -724,12 +758,31 @@ end
 
 local autoPlayEnabled = false
 
-SectionPiano:Toggle({
+local ToggleSheetAutoPlay
+ToggleSheetAutoPlay = SectionPiano:Toggle({
     Title = "Enable Auto Play on Sit",
     Desc = "Otomatis memainkan lagu saat duduk di piano",
     Value = autoPlayEnabled,
     Callback = function(state)
         autoPlayEnabled = state
+    end
+})
+
+SectionPiano:Keybind({
+    Title = "Force Stop Hotkey",
+    Desc = "Pintasan untuk memberhentikan paksa lagu yang sedang diputar",
+    Value = "None",
+    Callback = function()
+        if getgenv().GakuranPlayingPiano then
+            getgenv().GakuranPlayingPiano = false
+            if getgenv().GakuranPianoThread then
+                pcall(function() task.cancel(getgenv().GakuranPianoThread) end)
+                getgenv().GakuranPianoThread = nil
+            end
+            WindUI:Notify({Title = "Force Stop", Content = "Auto Piano telah dihentikan secara paksa!", Duration = 3})
+        else
+            WindUI:Notify({Title = "Force Stop", Content = "Tidak ada lagu yang sedang dimainkan.", Duration = 2})
+        end
     end
 })
 
@@ -825,11 +878,26 @@ end)
 local TabVisual = Window:Tab({Title = "Visuals", Icon = "eye"})
 local SectionMasterESP = TabVisual:Section({Title = "ESP", Icon = "power", Opened = true})
 
-SectionMasterESP:Toggle({
+local ToggleESP
+ToggleESP = SectionMasterESP:Toggle({
     Title = "Enable Player ESP",
     Desc = "Saklar utama visual pemain",
     Value = Config.ESPEnabled,
     Callback = function(state) Config.ESPEnabled = state end
+})
+
+SectionMasterESP:Keybind({
+    Title = "ESP Hotkey",
+    Desc = "Pintasan menyalakan/mematikan ESP",
+    Value = "None",
+    Callback = function()
+        Config.ESPEnabled = not Config.ESPEnabled
+        pcall(function()
+            if ToggleESP.Set then ToggleESP:Set(Config.ESPEnabled)
+            elseif ToggleESP.SetValue then ToggleESP:SetValue(Config.ESPEnabled) end
+        end)
+        WindUI:Notify({Title = "ESP Visual", Content = Config.ESPEnabled and "ESP Aktif" or "ESP Nonaktif", Duration = 2})
+    end
 })
 SectionMasterESP:Colorpicker({
     Title = "Global ESP Color",
@@ -1021,13 +1089,40 @@ SectionInterface:Keybind({
 
 local SectionOverlay = TabSettings:Section({Title = "Overlay Info", Icon = "layout-dashboard", Opened = true})
 
-SectionOverlay:Toggle({Title = "Show Watermark", Desc = "Menampilkan tulisan Horizon Hub", Value = getgenv().HZNShowWatermark or false, Callback = function(s) getgenv().HZNShowWatermark = s end})
-SectionOverlay:Toggle({Title = "Show FPS & Ping", Desc = "Kinerja jaringan dan frame rate", Value = getgenv().HZNShowFPS or false, Callback = function(s) getgenv().HZNShowFPS = s end})
-SectionOverlay:Toggle({Title = "Show Session Time", Desc = "Durasi bermain", Value = getgenv().HZNShowSession or false, Callback = function(s) getgenv().HZNShowSession = s end})
-SectionOverlay:Toggle({Title = "Show Local Clock", Desc = "Waktu asli di dunia nyata", Value = getgenv().HZNShowClock or false, Callback = function(s) getgenv().HZNShowClock = s end})
-SectionOverlay:Toggle({Title = "Show Memory (RAM)", Desc = "Penggunaan memori game", Value = getgenv().HZNShowRAM or false, Callback = function(s) getgenv().HZNShowRAM = s end})
-SectionOverlay:Toggle({Title = "Show Player Count", Desc = "Jumlah pemain di server", Value = getgenv().HZNShowPlayers or false, Callback = function(s) getgenv().HZNShowPlayers = s end})
-SectionOverlay:Toggle({Title = "Show Movement Speed", Desc = "Kecepatan karakter berjalan", Value = getgenv().HZNShowSpeed or false, Callback = function(s) getgenv().HZNShowSpeed = s end})
+local defaultOverlay = {}
+if getgenv().HZNShowWatermark then table.insert(defaultOverlay, "Watermark") end
+if getgenv().HZNShowFPS then table.insert(defaultOverlay, "FPS & Ping") end
+if getgenv().HZNShowSession then table.insert(defaultOverlay, "Session Time") end
+if getgenv().HZNShowClock then table.insert(defaultOverlay, "Local Clock") end
+if getgenv().HZNShowRAM then table.insert(defaultOverlay, "Memory (RAM)") end
+if getgenv().HZNShowPlayers then table.insert(defaultOverlay, "Player Count") end
+if getgenv().HZNShowSpeed then table.insert(defaultOverlay, "Movement Speed") end
+
+SectionOverlay:Dropdown({
+    Title = "Active Overlay Elements",
+    Desc = "Pilih informasi yang ingin ditampilkan di layar",
+    Multi = true,
+    Values = {"Watermark", "FPS & Ping", "Session Time", "Local Clock", "Memory (RAM)", "Player Count", "Movement Speed"},
+    Value = defaultOverlay,
+    Callback = function(val)
+        local function has(opt)
+            if type(val) == "table" then
+                for k, v in pairs(val) do
+                    if type(k) == "number" and v == opt then return true end
+                    if k == opt and v == true then return true end
+                end
+            end
+            return false
+        end
+        getgenv().HZNShowWatermark = has("Watermark")
+        getgenv().HZNShowFPS = has("FPS & Ping")
+        getgenv().HZNShowSession = has("Session Time")
+        getgenv().HZNShowClock = has("Local Clock")
+        getgenv().HZNShowRAM = has("Memory (RAM)")
+        getgenv().HZNShowPlayers = has("Player Count")
+        getgenv().HZNShowSpeed = has("Movement Speed")
+    end
+})
 
 SectionOverlay:Dropdown({
     Title = "Overlay Position",
@@ -1044,11 +1139,11 @@ local SectionThemes = TabSettings:Section({Title = "Theme Customization", Icon =
 -- Fitur ubah tema, WindUI mendukung SetTheme secara bawaan (Dark, Light, Rose, dll)
 SectionThemes:Dropdown({
     Title = "Select UI Theme",
-    Desc = "Ubah warna antarmuka WindUI secara instan",
+    Desc = "Pilih tema warna",
     Values = {"Dark", "Light", "Rose", "Aqua", "Amethyst"},
     Value = "Dark",
     Callback = function(val)
-        pcall(function() Window:SetTheme(val) end)
+        pcall(function() WindUI:SetTheme(val) end)
     end
 })
 local SectionDanger = TabSettings:Section({Title = "System & Security", Icon = "shield-alert", Opened = true})
